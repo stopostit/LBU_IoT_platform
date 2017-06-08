@@ -1,0 +1,22 @@
+{
+  "name": "lbu_iot_platform",
+  "version": "1.0.0",
+  "description": "IoT platform for an internship in Leeds Beckett University",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/stopostit/LBU_IoT_platform.git"
+  },
+  "author": "Maxime Caisez",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/stopostit/LBU_IoT_platform/issues"
+  },
+  "homepage": "https://github.com/stopostit/LBU_IoT_platform#readme",
+  "dependencies": {
+    "zetta": "^1.4.0"
+  }
+}
