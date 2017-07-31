@@ -8,7 +8,7 @@
 #include <Time.h>
 
 
-#define DHTPIN A1  // what pin we're connected to
+#define DHTPIN A2  // what pin we're connected to
 #define SOUNDPIN A0
 #define LIGHTPIN A5
 
@@ -38,9 +38,11 @@ void setup(){
     pinMode(LEDPIN, OUTPUT); 
 }
 
-void loop(){
+void send(int i){
+    Serial.print("i in send = ");
+    Serial.println(i);
+    Serial.println("");
     uint8_t json[RH_RF95_MAX_MESSAGE_LEN];
-    Serial.begin(9600);
 
     float h = dht.readHumidity();
     float t = dht.readTemperature();
@@ -54,78 +56,102 @@ void loop(){
         Serial.println("Failed to read from DHT");
     } 
 
-    uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
-    uint8_t len = sizeof(buf);
-    uint8_t rcvID[50];
-    // uint8_t copy[RH_RF95_MAX_MESSAGE_LEN];
-
     StaticJsonBuffer<200> jsonsendBuffer;
     JsonObject& send = jsonsendBuffer.createObject();
     send["ID"]=ID;
     send["time"] = micros();
+    switch(i){
+        case 0:
+            send["sensor"] = "Temperature";
+            send["data"]=t;
+            break;
+        case 1:
+            send["sensor"] = "Humidity";
+            send["data"]=h;
+            break;
+        case 2:
+            send["sensor"] = "Sound";
+            send["data"] = s*5/1025; 
+            break;
+        case 3:
+            send["sensor"]= "Light";
+            send["data"]=Lux;
+            break;
+        default:
+            Serial.println("Case error");
+            exit(1);
+            break;
+    }
+    
+    send.printTo(json,sizeof(json));
+    // sprintf(json,"\n");
+    Serial.println("pouet");
+    Serial.print("Sending to LoRa Server : ");
+    Serial.println((char*)json);
+    if(rf95.send(json, sizeof(json))){
+        Serial.println("send OK");
+    }
+    if(!rf95.waitPacketSent()){
+        Serial.println("Send Timeout");
+    }
+}
+
+void loop(){
+    
+    uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
+    uint8_t len = sizeof(buf);
+    uint8_t rcvID[50];
+    uint8_t copy[RH_RF95_MAX_MESSAGE_LEN];
 
     StaticJsonBuffer<200> RcvBuffer;
     int value;
 
     for(int i=0;i<4;i++){
-        switch(i){
-            case 0:
-                send["sensor"] = "Temperature";
-                send["data"]=t;
-                break;
-            case 1:
-                send["sensor"] = "Humidity";
-                send["data"]=h;
-                break;
-            case 2:
-                send["sensor"] = "Sound";
-                send["data"] = s*5/1025; 
-                break;
-            case 3:
-                send["sensor"]= "Light";
-                send["data"]=Lux;
-                break;
-            default:
-                Serial.println("Case error");
-                exit(1);
-                break;
-        }
+        Serial.println("");
+        Serial.print("i = ");
+        Serial.println(i);
+        send(i);
 
-        send.prettyPrintTo(json,sizeof(json)); 
-      
-        Serial.println("Sending to LoRa Server");
-        rf95.send(json, sizeof(json));
-        rf95.waitPacketSent();
         if (rf95.waitAvailableTimeout(TIMEOUT)){ 
-            if (rf95.recv(buf, &len)){  
-                // strcpy(copy,buf);
+            if (rf95.recv(buf, &len)){ 
                 Serial.println("received :");
-                Serial.println((char*)buf);
+                Serial.println((char*)buf); 
+                // strcpy(copy,buf);
                 while(strcmp(buf,ID)){
                     Serial.println("Waiting...");
-                    // JsonObject& rcv = RcvBuffer.parseObject(buf); // Dowlink handling
-                    // strcpy(rcvID,rcv["ID"]);
-                    // if (!rcv.success()){
-                    //     Serial.println("Not Json");
-                    // }
-                    // else{
-                    //     if(!strcmp(rcvID,ID)){
-                    //         switch ((int)rcv["data"]) {
-                    //             case 1:
-                    //                 digitalWrite(LEDPIN, HIGH);
-                    //                 break;
-                    //             case 0:
-                    //                 digitalWrite(LEDPIN, LOW);
-                    //                 break;
-                    //             default:
-                    //                 Serial.println("Wrong entry");
-                    //                 break;
-                    //         }
-                    //     }
-                    //     else{
-                    //         Serial.println("Not for me");
-                    //     }
-                    // }
+                    if (rf95.waitAvailableTimeout(TIMEOUT)){ 
+                        if (rf95.recv(buf, &len)){ 
+                            // JsonObject& rcv = RcvBuffer.parseObject(copy); // Dowlink handling
+                            // strcpy(rcvID,rcv["ID"]);
+                            // if (!rcv.success()){
+                            //     Serial.println("Not Json");
+                            // }
+                            // else{
+                            //     if(!strcmp(rcvID,ID)){
+                            //         switch ((int)rcv["data"]) {
+                            //             case 1:
+                            //                 digitalWrite(LEDPIN, HIGH);
+                            //                 break;
+                            //             case 0:
+                            //                 digitalWrite(LEDPIN, LOW);
+                            //                 break;
+                            //             default:
+                            //                 Serial.println("Wrong entry");
+                            //                 break;
+                            //         }
+                            //     }
+                            //     else{
+                            //         Serial.println("Not for me");
+                            //     }
+                            // }
+                        }
+                        else{
+                            Serial.println("recv failed");
+                        }
+                    }
+                    else{
+                        Serial.println("Timeout");
+                    }
                     delay(500);
                 }
                 Serial.println("OK received ack ! Let's carry on.");
