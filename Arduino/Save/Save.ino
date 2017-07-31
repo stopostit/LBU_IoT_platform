@@ -40,8 +40,6 @@ void setup(){
 
 void loop(){
     uint8_t json[RH_RF95_MAX_MESSAGE_LEN];
-    Serial.begin(9600);
-
     float h = dht.readHumidity();
     float t = dht.readTemperature();
     float s = analogRead(SOUNDPIN);
