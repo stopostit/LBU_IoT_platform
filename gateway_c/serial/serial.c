@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 				   to the actual number of characters actually read */
 				res = read(fd,buf,255);
 				buf[res]=0;             /* set end of string, so we can printf */
-				printf(":%s:%d\n", buf, res);
+				printf("%s\n", buf, res);
 				//if (counter++>5) STOP=TRUE;
 		}
 

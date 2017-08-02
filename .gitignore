@@ -1,4 +1,5 @@
 # Dependency directories
-node_modules/
+zetta/node_modules/
 #Authentication key for firebase
 gateway_c/curlPOST/authentification_firebase.key
+gateway_c/**/a.out
