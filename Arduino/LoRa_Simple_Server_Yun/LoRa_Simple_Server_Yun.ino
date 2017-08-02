@@ -1,4 +1,4 @@
-#define BAUDRATE 115200
+#define BAUDRATE 9600
 
 #include <Console.h>
 #include <SPI.h>
@@ -13,11 +13,11 @@ float frequency = 433.0;
 
 void setup() {
     pinMode(led, OUTPUT);     
-    Bridge.begin(BAUDRATE);
-    Console.begin();
-    Console.println("Start Sketch");
+    // Bridge.begin(BAUDRATE);
+    Serial.begin(9600);
+    Serial.println("Start Sketch");
     if (!rf95.init())
-        Console.println("init failed");
+        Serial.println("init failed");
     rf95.setFrequency(frequency);
     rf95.setTxPower(13);
 }
@@ -34,35 +34,36 @@ void loop(){
     if (rf95.available()){
         if (rf95.recv(buf, &len)){
             digitalWrite(led, HIGH);
-            Console.println((char*)buf);
+            Serial.println((char*)buf);
             JsonObject& root = jsonBuffer.parseObject(buf);
             strcpy(ID,root["ID"]);
             rf95.send((const uint8_t *)ID, sizeof(ID));
             rf95.waitPacketSent();
             digitalWrite(led, LOW);
 
-            Rcvbuff = Console.readString();
+            Rcvbuff = Serial.readString();
             if(Rcvbuff!=NULL){
                 Rcvbuff.toCharArray(sendbuf, sizeof(sendbuf));
-                Console.print("sending:");
-                Console.println(sendbuf);
+                Serial.print("sending:");
+                Serial.println(sendbuf);
                 rf95.send((const uint8_t *)sendbuf, sizeof(sendbuf));
                 rf95.waitPacketSent();
-                Rcvbuff=NULL;
             }
         }
         else{
-            Console.println("recv failed");
+            Serial.println("recv failed");
         }
-        // if(Console.available()){
-        //     Rcvbuff = Console.readString();
-        //     Rcvbuff.toCharArray(sendbuf, sizeof(sendbuf));
-        //     Console.print("sending:");
-        //     Console.println(sendbuf);
-        //     rf95.send((const uint8_t *)sendbuf, sizeof(sendbuf));
-        //     rf95.waitPacketSent();
-        // }
+        if(Serial.available()){
+            Rcvbuff = Serial.readString();
+            Rcvbuff.toCharArray(sendbuf, sizeof(sendbuf));
+            Serial.print("sending:");
+            Serial.println(sendbuf);
+            rf95.send((const uint8_t *)sendbuf, sizeof(sendbuf));
+            rf95.waitPacketSent();
+        }
     }
+    // Serial.println("coucou");
+    // Serial.println("poet");
 }
 
 
