@@ -1,1 +1,1 @@
-{"ID":"arduino1","time":71061532,"sensor":"Sound","data":2.502439}
+{ "arduino1": { "light": { "data":1, "timestamp":2 }, "sound": { "data":3, "timestamp":4 } } }
