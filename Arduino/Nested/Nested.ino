@@ -16,14 +16,14 @@
 
 #define PERIOD 5000
 
-#define TIMEOUT 3000
+#define TIMEOUT 4500
 
 #define LEDPIN 7
 
 // Singleton instance of the radio driver
 RH_RF95 rf95;
 float frequency = 433.0;
-uint8_t ID[]="arduino2";
+uint8_t ID[]="arduino1";
 
 DHT dht(DHTPIN, DHTTYPE);
 
@@ -49,25 +49,19 @@ void loop(){
     float Lux = ( 1000000 - resistance ) / 1998.4;
     int tps=micros();
 
-    // if (isnan(t) || isnan(h)){
-    //     Serial.println("Failed to read from DHT");
-    // } 
-
     uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
     uint8_t len = sizeof(buf);
     uint8_t rcvID[50];
-    // uint8_t copy[RH_RF95_MAX_MESSAGE_LEN];
 
     StaticJsonBuffer<200> jsonsendBuffer;
     JsonArray& root = jsonsendBuffer.createArray();
     JsonObject& send = root.createNestedObject().createNestedObject("send");
-    JsonObject& arduino2=send.createNestedObject("arduino2");
-    JsonObject& Temperature=arduino2.createNestedObject("Temperature");
-    JsonObject& Humidity=arduino2.createNestedObject("Humidity");
-    JsonObject& Light=arduino2.createNestedObject("Light");
-    JsonObject& Sound=arduino2.createNestedObject("Sound");
-    // send["ID"]=ID;
-    // send["time"] = micros();
+    JsonObject& arduino1=send.createNestedObject("arduino1");
+    JsonObject& Temperature=arduino1.createNestedObject("Temperature");
+    JsonObject& Humidity=arduino1.createNestedObject("Humidity");
+    JsonObject& Light=arduino1.createNestedObject("Light");
+    JsonObject& Sound=arduino1.createNestedObject("Sound");
+
     Temperature["time"]=tps;
     if (isnan(t)){
         Temperature["data"]="NaN";
@@ -93,104 +87,75 @@ void loop(){
     StaticJsonBuffer<200> RcvBuffer;
     int value;
 
-    // for(int i=0;i<4;i++){
-        // switch(i){
-        //     case 0:
-        //         send["sensor"] = "Temperature";
-        //         if (isnan(t)){
-        //             send["data"]="NaN";
-        //         }
-        //         else{
-        //             send["data"]=t;
-        //         }
-        //         break;
-        //     case 1:
-        //         if (isnan(h)){
-        //             send["data"]="NaN";
-        //         }
-        //         else{
-        //             send["data"]=h;
-        //         }
-        //         break;
-        //     case 2:
-        //         send["sensor"] = "Sound";
-        //         send["data"] = s*5/1025; 
-        //         break;
-        //     case 3:
-        //         send["sensor"]= "Light";
-        //         send["data"]=Lux;
-        //         break;
-        //     default:
-        //         Serial.println("Case error");
-        //         exit(1);
-        //         break;
-        // }
-
-        send.printTo(json,sizeof(json)); 
-      
-        Serial.print("Sending to LoRa Server : ");
-        Serial.println((char*)json);
-        rf95.send(json, sizeof(json));
-        rf95.waitPacketSent();
-        if (rf95.waitAvailableTimeout(TIMEOUT)){ 
-            if (rf95.recv(buf, &len)){ 
-                Serial.println("received :");
-                Serial.println((char*)buf); 
-                // strcpy(copy,buf);
-                while(strcmp(buf,ID)){
-                    Serial.println("Waiting...");
-                    if (rf95.waitAvailableTimeout(TIMEOUT)){ 
-                        if (rf95.recv(buf, &len)){ 
-                            // JsonObject& rcv = RcvBuffer.parseObject(copy); // Dowlink handling
-                            // strcpy(rcvID,rcv["ID"]);
-                            // if (!rcv.success()){
-                            //     Serial.println("Not Json");
-                            // }
-                            // else{
-                            //     if(!strcmp(rcvID,ID)){
-                            //         switch ((int)rcv["data"]) {
-                            //             case 1:
-                            //                 digitalWrite(LEDPIN, HIGH);
-                            //                 break;
-                            //             case 0:
-                            //                 digitalWrite(LEDPIN, LOW);
-                            //                 break;
-                            //             default:
-                            //                 Serial.println("Wrong entry");
-                            //                 break;
-                            //         }
-                            //     }
-                            //     else{
-                            //         Serial.println("Not for me");
-                            //     }
-                            // }
+    send.printTo(json,sizeof(json)); 
+  
+    Serial.print("Sending to LoRa Server : ");
+    Serial.println((char*)json);
+    rf95.send(json, sizeof(json));
+    rf95.waitPacketSent();
+    if (rf95.waitAvailableTimeout(TIMEOUT)){ 
+        if (rf95.recv(buf, &len)){ 
+            Serial.println("received :");
+            Serial.println((char*)buf); 
+            // strcpy(copy,buf);
+            // while(strcmp(buf,ID)){
+                // Serial.println("Waiting...");
+                // if (rf95.waitAvailableTimeout(TIMEOUT)){ 
+                //     if (rf95.recv(buf, &len)){ 
+                        JsonObject& rcv = RcvBuffer.parseObject(buf); // Dowlink handling
+                        strcpy(rcvID,rcv["ID"]);
+                        if (!rcv.success()){
+                            Serial.println("Not Json");
                         }
                         else{
-                            Serial.println("recv failed");
+                            if(!strcmp(rcvID,ID)){
+                                if(!strcmp(rcv["actuator"],"LED")){
+                                    switch ((int)rcv["state"]) {
+                                        case 1:
+                                            digitalWrite(LEDPIN, HIGH);
+                                            break;
+                                        case 0:
+                                            digitalWrite(LEDPIN, LOW);
+                                            break;
+                                        default:
+                                            Serial.println("Wrong entry");
+                                            break;
+                                    }
+                                }
+                                else{
+                                    Serial.println("wrong actuator");
+                                }
+                            }
+                            else{
+                                Serial.println("Not for me");
+                            }
                         }
-                    }
-                    else{
-                        Serial.println("Timeout");
-                    }
-                    delay(500);
-                }
-                Serial.println("OK received ack ! Let's carry on.");
-            }
-            else{
-                Serial.println("recv failed");
-            }
+            //         }
+            //         else{
+            //             Serial.println("recv failed");
+            //         }
+            //     }
+            //     else{
+            //         Serial.println("Timeout");
+            //     }
+            //     delay(500);
+            // }
+            // Serial.println("OK received ack ! Let's carry on.");
         }
         else{
-          Serial.println("No reply, is LoRa server running?");
+            Serial.println("recv failed");
         }
-        delay(PERIOD);
-    // }
+    }
+    else{
+      Serial.println("No reply.");
+    }
+    delay(PERIOD);
 }
 
 
 
 // {
-//     "arduino2": {
+//     "arduino1": {
 //         "light":{
 //             "data":24,
 //             "timestamp":14
@@ -201,3 +166,6 @@ void loop(){
 //         }
 //     }
 // }
+
+
+// {"ID":"arduino1","actuator":"LED","state":1}
