@@ -1,2 +1,4 @@
 # Dependency directories
 node_modules/
+#Authentication key for firebase
+gateway_c/curlPOST/authentification_firebase.key

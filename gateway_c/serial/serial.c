@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
 		tcflush(fd, TCIFLUSH);
 		tcsetattr(fd,TCSANOW,&newtio);
 
-		int counter = 0;
+		//int counter = 0;
 		while (STOP==FALSE) {     /* loop until we have a terminating condition */
 				/* read blocks program execution until a line terminating character is
 				   input, even if more than 255 chars are input. If the number
@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
 				res = read(fd,buf,255);
 				buf[res]=0;             /* set end of string, so we can printf */
 				printf(":%s:%d\n", buf, res);
-				if (counter++>5) STOP=TRUE;
+				//if (counter++>5) STOP=TRUE;
 		}
 
 		tcsetattr(fd,TCSANOW,&oldtio);
