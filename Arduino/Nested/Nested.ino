@@ -38,12 +38,8 @@ void setup(){
     pinMode(LEDPIN, OUTPUT); 
 }
 
-void send(int i){
-    Serial.print("i in send = ");
-    Serial.println(i);
-    Serial.println("");
+void loop(){
     uint8_t json[RH_RF95_MAX_MESSAGE_LEN];
-
     float h = dht.readHumidity();
     float t = dht.readTemperature();
     float s = analogRead(SOUNDPIN);
@@ -51,67 +47,91 @@ void send(int i){
     float voltage = lightsensor * (5.0/1023) * 1000;
     float resistance = 10000 * ( voltage / ( 5000.0 - voltage) ); // Pont diviseur Vout = Vin*(R2/(R1 + R2))
     float Lux = ( 1000000 - resistance ) / 1998.4;
+    int tps=micros();
 
-    if (isnan(t) || isnan(h)){
-        Serial.println("Failed to read from DHT");
-    } 
+    // if (isnan(t) || isnan(h)){
+    //     Serial.println("Failed to read from DHT");
+    // } 
 
-    StaticJsonBuffer<200> jsonsendBuffer;
-    JsonObject& send = jsonsendBuffer.createObject();
-    send["ID"]=ID;
-    send["time"] = micros();
-    switch(i){
-        case 0:
-            send["sensor"] = "Temperature";
-            send["data"]=t;
-            break;
-        case 1:
-            send["sensor"] = "Humidity";
-            send["data"]=h;
-            break;
-        case 2:
-            send["sensor"] = "Sound";
-            send["data"] = s*5/1025; 
-            break;
-        case 3:
-            send["sensor"]= "Light";
-            send["data"]=Lux;
-            break;
-        default:
-            Serial.println("Case error");
-            exit(1);
-            break;
-    }
-    
-    send.printTo(json,sizeof(json));
-    // sprintf(json,"\n");
-    Serial.println("pouet");
-    Serial.print("Sending to LoRa Server : ");
-    Serial.println((char*)json);
-    if(rf95.send(json, sizeof(json))){
-        Serial.println("send OK");
-    }
-    if(!rf95.waitPacketSent()){
-        Serial.println("Send Timeout");
-    }
-}
-
-void loop(){
-    
     uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
     uint8_t len = sizeof(buf);
     uint8_t rcvID[50];
-    uint8_t copy[RH_RF95_MAX_MESSAGE_LEN];
+    // uint8_t copy[RH_RF95_MAX_MESSAGE_LEN];
+
+    StaticJsonBuffer<200> jsonsendBuffer;
+    JsonArray& root = jsonsendBuffer.createArray();
+    JsonObject& send = root.createNestedObject().createNestedObject("send");
+    JsonObject& arduino2=send.createNestedObject("arduino2");
+    JsonObject& Temperature=arduino2.createNestedObject("Temperature");
+    JsonObject& Humidity=arduino2.createNestedObject("Humidity");
+    JsonObject& Light=arduino2.createNestedObject("Light");
+    JsonObject& Sound=arduino2.createNestedObject("Sound");
+    // send["ID"]=ID;
+    // send["time"] = micros();
+    Temperature["time"]=tps;
+    if (isnan(t)){
+        Temperature["data"]="NaN";
+    }
+    else{
+        Temperature["data"]=t;
+    }
+
+    Humidity["time"]=tps;
+    if (isnan(h)){
+        Humidity["data"]="NaN";
+    }
+    else{
+        Humidity["data"]=h;
+    }
+
+    Light["time"]=tps;
+    Light["data"]=Lux;
+
+    Sound["time"]=tps;
+    Sound["data"]=s*5/1025;
 
     StaticJsonBuffer<200> RcvBuffer;
     int value;
 
-    for(int i=0;i<4;i++){
-        Serial.println("");
-        Serial.print("i = ");
-        Serial.println(i);
-        send(i);
+    // for(int i=0;i<4;i++){
+        // switch(i){
+        //     case 0:
+        //         send["sensor"] = "Temperature";
+        //         if (isnan(t)){
+        //             send["data"]="NaN";
+        //         }
+        //         else{
+        //             send["data"]=t;
+        //         }
+        //         break;
+        //     case 1:
+        //         if (isnan(h)){
+        //             send["data"]="NaN";
+        //         }
+        //         else{
+        //             send["data"]=h;
+        //         }
+        //         break;
+        //     case 2:
+        //         send["sensor"] = "Sound";
+        //         send["data"] = s*5/1025; 
+        //         break;
+        //     case 3:
+        //         send["sensor"]= "Light";
+        //         send["data"]=Lux;
+        //         break;
+        //     default:
+        //         Serial.println("Case error");
+        //         exit(1);
+        //         break;
+        // }
 
+        send.printTo(json,sizeof(json)); 
+      
+        Serial.print("Sending to LoRa Server : ");
+        Serial.println((char*)json);
+        rf95.send(json, sizeof(json));
+        rf95.waitPacketSent();
         if (rf95.waitAvailableTimeout(TIMEOUT)){ 
             if (rf95.recv(buf, &len)){ 
                 Serial.println("received :");
@@ -164,7 +184,20 @@ void loop(){
           Serial.println("No reply, is LoRa server running?");
         }
         delay(PERIOD);
-    }
+    // }
 }
 
 
+
+// {
+//     "arduino2": {
+//         "light":{
+//             "data":24,
+//             "timestamp":14
+//         }
+//         "sound":{
+//             "data":24,
+//             "timestamp":14
+//         }
+//     }
+// }
