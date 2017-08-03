@@ -8,7 +8,7 @@
 #include <Time.h>
 
 
-#define DHTPIN A2  // what pin we're connected to
+#define DHTPIN A1  // what pin we're connected to
 #define SOUNDPIN A0
 #define LIGHTPIN A5
 
