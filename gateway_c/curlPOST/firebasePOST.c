@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 		curl = curl_easy_init();
 		if(curl){
 				curl_easy_setopt(curl, CURLOPT_URL, DEST_URL );
-				curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
+				curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
 				curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers); 
 				curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_to_send);
 				res = curl_easy_perform(curl);

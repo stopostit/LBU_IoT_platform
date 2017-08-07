@@ -13,6 +13,9 @@
 
 volatile int STOP=FALSE;
 
+void signal_handler_IO(int status);
+int wait_flag=TRUE;
+
 int main(int argc, char *argv[])
 {
 		int fd, c, res;

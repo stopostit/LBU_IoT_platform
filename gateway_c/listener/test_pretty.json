@@ -1,0 +1,12 @@
+{
+		"arduino1": {
+				"light":{
+						"data":24,
+						"timestamp":14
+				}
+				"sound":{
+						"data":24,
+						"timestamp":14
+				}
+		}
+}
