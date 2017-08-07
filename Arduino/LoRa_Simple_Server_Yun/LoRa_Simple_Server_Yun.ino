@@ -50,7 +50,7 @@ void loop(){
             digitalWrite(led, LOW);
 
             Rcvbuff = Serial.readString();
-            Rcvbuff = Console.readString();
+            // Rcvbuff = Console.readString();
             if(Rcvbuff!=NULL){
                 Rcvbuff.toCharArray(sendbuf, sizeof(sendbuf));
                 Serial.print("sending:");
