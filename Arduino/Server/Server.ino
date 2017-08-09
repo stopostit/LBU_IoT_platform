@@ -1,10 +1,10 @@
-#define BAUDRATE 115200
-
 #include <Console.h>
 #include <SPI.h>
 #include <RH_RF95.h>
 #include <ArduinoJson.h>
 #include <ArduinoJson.hpp>
+
+#define BAUDRATE 115200
 
 RH_RF95 rf95;
 
@@ -12,8 +12,12 @@ int led = A2;
 float frequency = 433.0;
 
 void setup() {
-    pinMode(led, OUTPUT);     
-    // Bridge.begin(BAUDRATE); // All the commented parts must be switched tu be used for debug (bridge and console) to visualize datat on the arduino IDE or with the C app (Serial)
+    pinMode(led, OUTPUT);
+    /*
+    All the commented parts must be inverted tu be used to visualize 
+    data on the arduino IDE (bridge and console) or with the C app (Serial)     
+    */
+    // Bridge.begin(BAUDRATE); 
     Serial.begin(9600);
     Serial.println("Start Sketch");
     // Console.begin();
@@ -27,27 +31,27 @@ void setup() {
 }
 
 void loop(){
-    StaticJsonBuffer<200> jsonBuffer; // buffer for the json object
-    uint8_t buf[RH_RF95_MAX_MESSAGE_LEN]; // buffer to be sent of the max size handled by RH_RF
+    StaticJsonBuffer<200> jsonBuffer; 
+    uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
     uint8_t len = sizeof(buf);
     const char ID[RH_RF95_MAX_MESSAGE_LEN];
     const char sendbuf[RH_RF95_MAX_MESSAGE_LEN];
 
     String Rcvbuff;
 
-    if (rf95.available()){
-        if (rf95.recv(buf, &len)){
+    if (rf95.available()){ 
+        if (rf95.recv(buf, &len)){ //message recepetion and saving in the buffer
             digitalWrite(led, HIGH);
             Serial.println((char*)buf);
             // Console.println((char*)buf);
 
-            // JsonObject& root = jsonBuffer.parseObject(buf);
-            // strcpy(ID,root["ID"]);
-            // Console.print("Sending: ");
-            // Console.println((char*)root["arduino2"]);
-            // rf95.send((const uint8_t *)ID, sizeof(ID));
-            // rf95.waitPacketSent();
             digitalWrite(led, LOW);
+
+            /*
+            Waiting for a dowlink command to be received
+            If received, instant sending to the end devices
+            Command format : {"ID":"arduino2","actuator":"LED","state":1}
+            */
 
             Rcvbuff = Serial.readString();
             // Rcvbuff = Console.readString();
