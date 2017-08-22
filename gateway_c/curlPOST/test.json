@@ -1,1 +1,1 @@
-{ "arduino1": { "light": { "data":1, "timestamp":2 }, "sound": { "data":3, "timestamp":4 } } }
+{"arduino2":{"Temperature":{"time":12236,"data":26},"Humidity":{"time":12236,"data":31},"Light":{"time":12236,"data":498.9732},"Sound":{"time":12236,"data":2.482927}}}

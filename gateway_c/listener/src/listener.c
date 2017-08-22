@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
 		headers=curl_slist_append(headers, "Accept: application/json");
 		headers=curl_slist_append(headers, "Content-Type: application/json");
 		headers=curl_slist_append(headers, "charsets: utf-8");
-		CURLcode res;
+		CURLcode rescurl;
 		curl_global_init(CURL_GLOBAL_DEFAULT);
 		curl = curl_easy_init();
 		if(curl == NULL){
@@ -76,4 +76,4 @@ int main(int argc, char *argv[])
 		curl_global_cleanup();
 		tcsetattr(fd,TCSANOW,&oldtio);
 		return 0;
-}include "serial.h"
+}
