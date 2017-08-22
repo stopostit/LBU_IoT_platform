@@ -23,7 +23,7 @@
 // Singleton instance of the radio driver
 RH_RF95 rf95;
 float frequency = 433.0;
-uint8_t ID[]="arduino1";
+uint8_t ID[]="arduino2";
 
 DHT dht(DHTPIN, DHTTYPE);
 
@@ -38,7 +38,7 @@ void setup(){
     pinMode(LEDPIN, OUTPUT); 
 }
 
-void loop(){
+void send(){
     uint8_t json[RH_RF95_MAX_MESSAGE_LEN];
     float h = dht.readHumidity();
     float t = dht.readTemperature();
@@ -49,18 +49,14 @@ void loop(){
     float Lux = ( 1000000 - resistance ) / 1998.4;
     int tps=micros();
 
-    uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
-    uint8_t len = sizeof(buf);
-    uint8_t rcvID[50];
-
     StaticJsonBuffer<200> jsonsendBuffer;
     JsonArray& root = jsonsendBuffer.createArray();
     JsonObject& send = root.createNestedObject().createNestedObject("send");
-    JsonObject& arduino1=send.createNestedObject("arduino1");
-    JsonObject& Temperature=arduino1.createNestedObject("Temperature");
-    JsonObject& Humidity=arduino1.createNestedObject("Humidity");
-    JsonObject& Light=arduino1.createNestedObject("Light");
-    JsonObject& Sound=arduino1.createNestedObject("Sound");
+    JsonObject& arduino2=send.createNestedObject("arduino2");
+    JsonObject& Temperature=arduino2.createNestedObject("Temperature");
+    JsonObject& Humidity=arduino2.createNestedObject("Humidity");
+    JsonObject& Light=arduino2.createNestedObject("Light");
+    JsonObject& Sound=arduino2.createNestedObject("Sound");
 
     Temperature["time"]=tps;
     if (isnan(t)){
@@ -84,15 +80,21 @@ void loop(){
     Sound["time"]=tps;
     Sound["data"]=s*5/1025;
 
-    StaticJsonBuffer<200> RcvBuffer;
-    int value;
-
     send.printTo(json,sizeof(json)); 
   
     Serial.print("Sending to LoRa Server : ");
     Serial.println((char*)json);
     rf95.send(json, sizeof(json));
     rf95.waitPacketSent();
+}
+
+void receive(){
+    uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
+    uint8_t len = sizeof(buf);
+    uint8_t rcvID[50];
+    StaticJsonBuffer<200> RcvBuffer;
+    int value;
+    
     if (rf95.waitAvailableTimeout(TIMEOUT)){ 
         if (rf95.recv(buf, &len)){ 
             Serial.println("received :");
@@ -149,13 +151,18 @@ void loop(){
     else{
       Serial.println("No reply.");
     }
+}
+
+void loop(){
+    send();
+    receive();
     delay(PERIOD);
 }
 
 
 
 // {
-//     "arduino1": {
+//     "arduino2": {
 //         "light":{
 //             "data":24,
 //             "timestamp":14
@@ -168,4 +175,4 @@ void loop(){
 // }
 
 
-// {"ID":"arduino1","actuator":"LED","state":1}
+// {"ID":"arduino2","actuator":"LED","state":1}
